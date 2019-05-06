@@ -35,8 +35,8 @@ spring:
     config:
       server:
         git:
-          uri: https://git.oschina.net/gongxusheng/spring-config-demo.git
-          searchPaths: my-sample-config
+          uri: https://github.com/chengliang-china/spring-config-demo.git
+          searchPaths: spring-cloud-config
 ```
 如果配置文件放置在Git存储库的根目录下，则无需使用searchPaths参数，本例中的配置文件在my-sample-config目录中，因此使用searchPaths参数提示Config服务器搜索my-sample-config子目录。
 
@@ -44,24 +44,23 @@ spring:
 
 ```
 {
-  "name": "my-client",
-  "profiles": ["master"],
-  "label": null,
-  "version": "9bace30e907ff34dc2ce377ceb7831278c856455",
-  "propertySources": [
-    {
-      "name": "https://git.oschina.net/gongxusheng/spring-config-demo.git
-        /my-sample-config/my-client.yml",
-      "source": {"my-config.appName": "my-app"}
-    }
-  ]
+"name": "my-client",
+"profiles": ["master"],
+"label": null,
+"version": "508d330e7f9aea755fb43617009f3292cd117599",
+"propertySources": [{
+"name": "https://github.com/chengliang-china/spring-config-demo.git/spring-cloud-config/my-client.yml",
+"source": {
+"my-config.appName": "my-app-new"
+}
+}]
 }
 ```
 Config服务器支持带多种形式的URL，读者可以尝试一下：
 
- - 增加profile参数，[http://localhost:8888/my-client/uat/master](http://localhost:8888/my-client/uat/master)
- - yml格式，[http://localhost:8888/my-client.yml](http://localhost:8888/my-client.yml)
- - properties格式，[http://localhost:8888/my-client.properties](http://localhost:8888/my-client.properties)
+ - 增加profile参数，[http://localhost:8081/my-client/uat/master](http://localhost:8888/my-client/uat/master)
+ - yml格式，[http://localhost:8081/my-client.yml](http://localhost:8888/my-client.yml)
+ - properties格式，[http://localhost:8081/my-client.properties](http://localhost:8888/my-client.properties)
 
 ##Spring Cloud Config客户端的配置
 使用Spring Starter Project快速创建一个Config Client+Web+Actuator项目。Spring Web用于演示获取属性值，Actuator的作用在于提供属性动态刷新、属性查看等功能。
@@ -74,7 +73,7 @@ spring:
     name: my-client
   cloud:
     config:
-      uri: http://localhost:8888
+      uri: http://localhost:8081
 ```
 2) 在@SpringBootApplication注解的MyConfigClientApplication类中增加一个方法，验证可以从Environment中获得配置
 
@@ -100,7 +99,7 @@ public class MySampleRestController {
 	}
 }
 ```
-注解@RefreshScope指示Config客户端在服务器参数刷新时，也刷新注入的属性值，详情可见后续的章节
+注解@RefreshScope指示Config客户端在服务器参数刷新时，也刷新注入的属性值，里面的my-config.appName 是配置文件中配置的，它读取的也是配置文件中的数据
 
 4) 启动客户端应用MyConfigClientApplication，即可见其中日志中输出了
 
@@ -117,12 +116,12 @@ my-config.appName from env: my-app-uat
 ##动态刷新配置
 无需重新启动客户端，即可更新Spring Cloud Config管理的配置
 
-1)在Git中更新 my-client-uat.yml 文件中的配置:
+1)在Git中更新 my-client.yml 文件中的配置:
 ```
 my-config:
   appName: my-app-uat-new
 ```
 
-2) 访问[http://localhost:8888/my-client/uat/master](http://localhost:8888/my-client/uat/master)，可见属性my-config.appName已经更新。但此时访问[http://localhost:8080/app-name](http://localhost:8080/app-name)，客户端读到属性值尚未更新。
+2) 访问[http://localhost:8081/my-client/uat/master](http://localhost:8081/my-client/uat/master)，可见属性my-config.appName已经更新。但此时访问[http://localhost:8080/app-name](http://localhost:8080/app-name)，客户端读到属性值尚未更新。
 
-3) 对Conf客户端发一个POST请求[http://localhost:8080/refresh]()，返回200 OK。再次访问[http://localhost:8080/app-name](http://localhost:8080/app-name)，可见在并未重启客户端服务的情况下，读到的属性值已经动态更新
+3) 对Conf客户端发一个POST请求[http://localhost:8080/refresh]()，返回200 OK。再次访问[http://localhost:8080/app-name](http://localhost:8080/app-name)，可见在并未重启客户端服务的情况下，读到的属性值已经动态更新（注意得是post请求）
