@@ -1,3 +1,3 @@
 my-config:
-  appName: my-app-uat-new
+  appName: application-dev
   debugMode: true
